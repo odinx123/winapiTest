@@ -1,0 +1,213 @@
+#ifndef SCREEN_H
+#define SCREEN_H 1
+
+#define _UNICODE
+#include <windows.h>
+
+#include <vector>
+#include "ScreenFunction.h"
+
+typedef short SIZE_S;
+typedef std::vector<std::string> picture;
+typedef std::vector<std::wstring> wpicture;
+typedef unsigned short CODE;
+
+#define DEFAULE_CODE 0
+#define ALLOW_UNICODE 1
+
+class Screen {
+   private:
+    HANDLE orgBuf;
+    CONSOLE_CURSOR_INFO cci;
+
+   protected:
+    SIZE_S width = 20;
+    SIZE_S height = 10;
+    SIZE_S win_width = 20;
+    SIZE_S win_height = 10;
+    COORD coord;
+    picture map_;
+    wpicture wmap_;
+
+   public:
+    // Constructor
+    Screen(SIZE_S Width = 100, SIZE_S Height = 40, CODE state = DEFAULE_CODE);
+
+    // function
+
+    // (x, y) is the start position of the pic.
+    void draw(const picture& pic, SIZE_S x, SIZE_S y);
+    void display() const;
+    inline void setCursorVisible();
+    inline void setCursorUnVisible();
+    SIZE_S getWinHeight() const { return win_height; }
+    SIZE_S getWinWidth() const { return win_width; }
+    SIZE_S getHeight() const { return height; }
+    SIZE_S getWidth() const { return width; }
+
+   private:
+};
+
+// Constructor
+Screen::Screen(SIZE_S Width, SIZE_S Height, CODE state) {
+    // set screen size.
+    width = state ? Width/2+1 : Width;
+    height = Height;
+    win_height = Height;
+    win_width = Width;
+    
+    // get console HANDLE
+    cci = {1, false};
+    orgBuf = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // set cursor unvisorble
+    SetConsoleCursorInfo(orgBuf, &cci);
+    
+    map_.resize(height, std::string(width, ' '));
+    setConsoleSize(win_width, win_height, orgBuf);
+    SetWindowPos(GetConsoleWindow(), HWND_TOPMOST, 350, 35, 0, 0, SWP_NOSIZE);
+    // LPCSTR
+    // SetConsoleTitle("C110152318_期末RPG遊戲!!!");
+}
+
+// Function
+void Screen::draw(const picture& pic, SIZE_S x, SIZE_S y) {
+    SIZE_S yLength = height >= pic.size()+y ? pic.size()+y : height;
+    SIZE_S xLength = width >= pic[0].size()+x ? pic[0].size()+x : width;
+    for (int i = y; i < yLength; ++i) {
+        for (int j = x; j < xLength; ++j)
+            map_[i][j] = pic[i-y][j-x];
+    }
+}
+
+void Screen::display() const {
+    for (short i = 0; i < height; ++i) {
+        SetConsoleCursorPosition(orgBuf, {0, i});
+        WriteConsole(orgBuf, map_[i].c_str(), width, nullptr, nullptr);
+    }
+}
+
+void Screen::setCursorVisible() {
+    cci.bVisible = true;
+    SetConsoleCursorInfo(orgBuf, &cci);
+}
+
+void Screen::setCursorUnVisible() {
+    cci.bVisible = false;
+    SetConsoleCursorInfo(orgBuf, &cci);
+}
+
+// private function
+
+#endif
+
+
+#ifndef SCREEN_H
+#define SCREEN_H 1
+
+#define _UNICODE
+#include <windows.h>
+
+#include <vector>
+#include "ScreenFunction.h"
+
+typedef short SIZE_S;
+typedef std::wstring wpix;
+typedef std::string pix;
+typedef std::vector<std::string> picture;
+typedef std::vector<std::wstring> wpicture;
+
+template<typename pixel>
+class Screen {
+    // 只有兩種型別
+   private:
+    HANDLE orgBuf;
+    CONSOLE_CURSOR_INFO cci;
+
+   protected:
+    SIZE_S width = 20;
+    SIZE_S height = 10;
+    SIZE_S win_width = 20;
+    SIZE_S win_height = 10;
+    std::vector<pixel> map_;
+
+   public:
+    // Constructor
+    Screen(SIZE_S Width = 100, SIZE_S Height = 40);
+
+    // function
+
+    // (x, y) is the start position of the pic.
+    void draw(const std::vector<pixel>& pic, SIZE_S x, SIZE_S y);
+    void display() const;
+    inline void setCursorVisible();
+    inline void setCursorUnVisible();
+    SIZE_S getWinHeight() const { return win_height; }
+    SIZE_S getWinWidth() const { return win_width; }
+    SIZE_S getHeight() const { return height; }
+    SIZE_S getWidth() const { return width; }
+
+   private:
+};
+
+// Constructor
+template<typename pixel>
+Screen<pixel>::Screen(SIZE_S Width, SIZE_S Height) {
+    // set screen size.
+    height = win_height = Height;
+    width = win_width = Width;
+    // todo
+    width = width/2;
+    
+    // get console HANDLE
+    cci = {1, false};
+    orgBuf = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    // set cursor unvisorble
+    SetConsoleCursorInfo(orgBuf, &cci);
+    
+    map_.resize(height, pixel(width, ' '));
+    
+    setConsoleSize(win_width, win_height, orgBuf);
+    SetWindowPos(GetConsoleWindow(), HWND_TOPMOST, 350, 35, 0, 0, SWP_NOSIZE);
+    // LPCSTR
+    SetConsoleCP(65001);
+    SetConsoleTitle("C110152318_期末RPG遊戲!!!");
+}
+
+// Function
+// todo
+template<typename pixel>
+void Screen<pixel>::draw(const std::vector<pixel>& pic, SIZE_S x, SIZE_S y) {
+    SIZE_S yLength = height >= pic.size()+y ? pic.size()+y : height;
+    SIZE_S xLength = width >= pic[0].size()+x ? pic[0].size()+x : width;
+    for (int i = y; i < yLength; ++i) {
+        for (int j = x; j < xLength; ++j)
+            map_[i][j] = pic[i-y][j-x];
+    }
+}
+
+// todo
+template<typename pixel>
+void Screen<pixel>::display() const {
+    for (short i = 0; i < height; ++i) {
+        SetConsoleCursorPosition(orgBuf, {0, i});
+        WriteConsoleW(orgBuf, map_[i].c_str(), width, nullptr, nullptr);
+    }
+}
+
+template<typename pixel>
+void Screen<pixel>::setCursorVisible() {
+    cci.bVisible = true;
+    SetConsoleCursorInfo(orgBuf, &cci);
+}
+
+template<typename pixel>
+void Screen<pixel>::setCursorUnVisible() {
+    cci.bVisible = false;
+    SetConsoleCursorInfo(orgBuf, &cci);
+}
+
+// private function
+
+#endif

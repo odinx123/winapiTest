@@ -1,0 +1,19 @@
+// The newest function.
+buffer2 = CreateFileA(
+        nullptr,
+        GENERIC_WRITE,
+        FILE_SHARE_WRITE,
+        nullptr,
+        OPEN_EXISTING,  // 檔案之外的裝置
+        FILE_ATTRIBUTE_NORMAL,
+        nullptr
+    );
+
+// The old function.
+buffer1 = CreateConsoleScreenBuffer(
+        GENERIC_WRITE,
+        FILE_SHARE_WRITE,
+        nullptr,
+        CONSOLE_TEXTMODE_BUFFER,
+        nullptr
+    );
